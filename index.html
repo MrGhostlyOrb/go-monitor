@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{.PageTitle}}</title>
+    <link rel="stylesheet" href="https://unpkg.com/98.css">
+    <link rel="icon" href="favicon.svg">
+
+    <style>
+        .container {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .window {
+            width: 33%;
+        }
+
+        *{
+            font-size:large;
+        }
+
+        /* Mobile layout: single column */
+        @media screen and (max-width: 980px) {
+            .container {
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+
+            .window {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            *{
+                font-size:xx-large;
+            }
+        }
+    </style>
+    <script>
+        function submitForm(event) {
+            event.preventDefault();  // Prevent the form from submitting the traditional way
+
+            // Get the input value
+            const input = document.getElementById('streamerInput').value;
+            
+            // Redirect to the desired URL with the input as a query parameter
+            if (input) {
+                window.location.href = `/add?username=${encodeURIComponent(input)}`;
+            } else {
+                alert('Please enter a streamer name!');
+            }
+        }
+    </script>
+</head>
+<body style="margin: 0;">
+    <div class="container">
+        <div class="window">
+            <div class="title-bar">
+                <div class="title-bar-text">{{if .Started}}🟢{{else}}🔴{{end}} {{.PageTitle}}</div>
+                <div class="title-bar-controls">
+                    <button aria-label="Minimize"></button>
+                    <button aria-label="Maximize"></button>
+                    <button aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="window-body">
+                <!-- Table to display the streamers/tasks -->
+                <table class="table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Streamers}}
+                        <tr>
+                            <td>{{if .Running}}
+                                🟢
+                            {{else}}
+                            🔴
+                            {{end}} {{.Username}}</td>
+                            <td><a href="/delete?username={{.Username}}">Delete</a></td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="window">
+            <div class="title-bar">
+                <div class="title-bar-text">Actions</div>
+                <div class="title-bar-controls">
+                    <button aria-label="Minimize"></button>
+                    <button aria-label="Maximize"></button>
+                    <button aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="window-body">
+                <form onsubmit="submitForm(event)" style="margin-bottom: 10px;">
+                    <input type="text" id="streamerInput" placeholder="Enter Username" />
+                    <input type="submit" value="ADD STREAMER" />
+                </form>
+                <!-- Table to display actions -->
+                <table class="table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><a href="/delete-merged">DELETE MERGED</a></td>
+                        </tr>
+                        <tr>
+                            <td><a href="/start">START</a></td>
+                        </tr>
+                        <tr>
+                            <td><a href="/stop">STOP</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

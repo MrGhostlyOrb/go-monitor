@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{.PageTitle}}</title>
+    <link rel="stylesheet" href="https://unpkg.com/98.css">
+    <link rel="icon" href="favicon.svg">
+
+    <style>
+        .container {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .window {
+            width: 33%;
+        }
+
+        *{
+            font-size:large;
+        }
+
+        /* Mobile layout: single column */
+        @media screen and (max-width: 980px) {
+            .container {
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+
+            .window {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            *{
+                font-size:xx-large;
+            }
+        }
+    </style>
+</head>
+<body style="margin: 0;">
+    <div class="container">
+        <div class="window">
+            <div class="title-bar">
+                <div class="title-bar-text">{{.PageTitle}}</div>
+                <div class="title-bar-controls">
+                    <button aria-label="Minimize"></button>
+                    <button aria-label="Maximize"></button>
+                    <button aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="window-body">
+                <table class="table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{.Username}}</td>
+                            <td><a href="/">Home</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

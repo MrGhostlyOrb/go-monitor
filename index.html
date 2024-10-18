@@ -38,15 +38,20 @@
         }
     </style>
     <script>
-        function submitForm(event) {
-            event.preventDefault();  // Prevent the form from submitting the traditional way
-
-            // Get the input value
-            const input = document.getElementById('streamerInput').value;
-            
-            // Redirect to the desired URL with the input as a query parameter
+        function addStreamer(event) {
+            event.preventDefault(); 
+            const input = document.getElementById('addStreamerInput').value;
             if (input) {
                 window.location.href = `/add?username=${encodeURIComponent(input)}`;
+            } else {
+                alert('Please enter a streamer name!');
+            }
+        }
+        function removeStreamer(event) {
+            event.preventDefault();
+            const input = document.getElementById('removeStreamerInput').value;
+            if (input) {
+                window.location.href = `/remove?username=${encodeURIComponent(input)}`;
             } else {
                 alert('Please enter a streamer name!');
             }
@@ -65,7 +70,6 @@
                 </div>
             </div>
             <div class="window-body">
-                <!-- Table to display the streamers/tasks -->
                 <table class="table" style="width: 100%;">
                     <thead>
                         <tr>
@@ -99,9 +103,13 @@
                 </div>
             </div>
             <div class="window-body">
-                <form onsubmit="submitForm(event)" style="margin-bottom: 10px;">
-                    <input type="text" id="streamerInput" placeholder="Enter Username" />
+                <form onsubmit="addStreamer(event)" style="margin-bottom: 10px;">
+                    <input type="text" id="addStreamerInput" placeholder="Enter Username" />
                     <input type="submit" value="ADD STREAMER" />
+                </form>
+                <form onsubmit="removeStreamer(event)" style="margin-bottom: 10px;">
+                    <input type="text" id="removeStreamerInput" placeholder="Enter Username" />
+                    <input type="submit" value="REMOVE STREAMER" />
                 </form>
                 <!-- Table to display actions -->
                 <table class="table" style="width: 100%;">

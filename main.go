@@ -258,6 +258,8 @@ func handleHttpRequests() {
 
 		streamer := Streamer{Username: username, Running: false}
 		streamers.Streamers = append(streamers.Streamers[:len(streamers.Streamers)], streamer)
+		wg.Add(1)
+		go handleRecording(username)
 
 		err = file.Truncate(0)
 		if err != nil {
@@ -279,6 +281,61 @@ func handleHttpRequests() {
 
 		pageData := ActionPageData{
 			PageTitle: "Added",
+			Username:  username,
+		}
+
+		tmpl, err := template.ParseFiles("action.html")
+		if err != nil {
+			http.Error(w, "[ERROR] unable to parse template:", http.StatusInternalServerError)
+			return
+		}
+		tmpl.Execute(w, pageData)
+	})
+
+	http.HandleFunc("/remove", func(w http.ResponseWriter, r *http.Request) {
+		queryParams := r.URL.Query()
+		username := queryParams.Get("username")
+
+		if username == "" {
+			http.Error(w, "[ERROR] username is required", http.StatusBadRequest)
+			return
+		}
+
+		file, err := os.OpenFile(configFilePath, os.O_RDWR, 0644)
+		if err != nil {
+			http.Error(w, "[ERROR] unable to open config file", http.StatusInternalServerError)
+
+			return
+		}
+		defer file.Close()
+
+		for i, streamer := range streamers.Streamers {
+			if streamer.Username == username {
+				streamers.Streamers = append(streamers.Streamers[:i], streamers.Streamers[i+1:]...)
+				break
+			}
+		}
+
+		err = file.Truncate(0)
+		if err != nil {
+			http.Error(w, "[ERROR] failed to truncate config json", http.StatusInternalServerError)
+			return
+		}
+		_, err = file.Seek(0, 0)
+		if err != nil {
+			http.Error(w, "[ERROR] failed to seek config json", http.StatusInternalServerError)
+			return
+		}
+		encoder := json.NewEncoder(file)
+		encoder.SetIndent("", "    ")
+		err = encoder.Encode(Streamers{streamers.Streamers})
+		if err != nil {
+			http.Error(w, "[ERROR] failed to encode config json", http.StatusInternalServerError)
+			return
+		}
+
+		pageData := ActionPageData{
+			PageTitle: "Removed",
 			Username:  username,
 		}
 

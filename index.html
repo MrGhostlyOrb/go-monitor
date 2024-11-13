@@ -85,7 +85,7 @@
                             {{else}}
                             🔴
                             {{end}} {{.Username}}</td>
-                            <td><a href="/delete?username={{.Username}}">Delete</a></td>
+                            <td><a href="/delete?username={{.Username}}">Remove</a></td>
                         </tr>
                         {{end}}
                     </tbody>
@@ -103,6 +103,7 @@
                 </div>
             </div>
             <div class="window-body">
+                <a href="{{.ClientUrl}}">Client</a>
                 <form onsubmit="addStreamer(event)" style="margin-bottom: 10px;">
                     <input type="text" id="addStreamerInput" placeholder="Enter Username" />
                     <input type="submit" value="ADD STREAMER" />

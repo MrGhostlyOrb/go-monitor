@@ -58,6 +58,7 @@ var streamSite = ""
 var cdnUrl = ""
 var started = true
 var clientUrl = ""
+var downloadDir = "./downloads"
 
 func init() {
 	err := godotenv.Load()
@@ -70,6 +71,7 @@ func init() {
 	streamSite = os.Getenv("STREAM_SITE")
 	cdnUrl = os.Getenv("CDN_URL")
 	clientUrl = os.Getenv("CLIENT_URL")
+	downloadDir = os.Getenv("DOWNLOAD_DIR")
 
 	jsonFile, err := os.Open(configFilePath)
 	if err != nil {
@@ -119,7 +121,7 @@ func startMerger() {
 			currentTime := time.Now().UTC()
 			if currentTime.Minute() == 0 || currentTime.Minute() == 30 {
 				fmt.Println("[MONITOR] starting merge...")
-				files, err := os.ReadDir("./downloads")
+				files, err := os.ReadDir(downloadDir)
 				if err != nil {
 					fmt.Printf("[ERROR] unable to read download dir: %s\n", err)
 					return
@@ -128,7 +130,7 @@ func startMerger() {
 				for _, file := range files {
 					if file.IsDir() {
 						streamerUsername := file.Name()
-						streamerFiles, err := os.ReadDir("./downloads/" + file.Name())
+						streamerFiles, err := os.ReadDir(fmt.Sprintf("%s/%s", downloadDir, file.Name()))
 						if err != nil {
 							fmt.Printf("[ERROR] unable to read streamer dir (%s): %s\n", streamerUsername, err)
 							return
@@ -136,7 +138,7 @@ func startMerger() {
 
 						for _, videoFile := range streamerFiles {
 							if !videoFile.IsDir() {
-								videoFileInfo, err := os.Stat(fmt.Sprintf("./downloads/%s/%s", streamerUsername, videoFile.Name()))
+								videoFileInfo, err := os.Stat(fmt.Sprintf("%s/%s/%s", downloadDir, streamerUsername, videoFile.Name()))
 								if err != nil {
 									fmt.Printf("[ERROR] unable to stat streamer video file (%s): %s\n", streamerUsername, err)
 									return
@@ -144,7 +146,7 @@ func startMerger() {
 								lastModifiedTime := videoFileInfo.ModTime()
 								add := lastModifiedTime.Add(minFileAgeForMerging).Compare(currentTime)
 								if strings.Contains(videoFile.Name(), "compressed") && add == -1 {
-									ffmpegMergeList, err := os.OpenFile(fmt.Sprintf("./downloads/%s/toMerge.txt", streamerUsername), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+									ffmpegMergeList, err := os.OpenFile(fmt.Sprintf("%s/%s/toMerge.txt", downloadDir, streamerUsername), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 									if err != nil {
 										fmt.Printf("[ERROR] unable to open ffmpeg merge list (%s): %s\n", streamerUsername, err)
 										return
@@ -167,8 +169,8 @@ func startMerger() {
 }
 
 func mergeAndCleanup(streamerUsername string, currentTime time.Time) {
-	mergeListFilePath := fmt.Sprintf("./downloads/%s/toMerge.txt", streamerUsername)
-	outputFileName := fmt.Sprintf("./downloads/%s/MERGED_%s.mkv", streamerUsername, currentTime.Format(dateTimeFormat))
+	mergeListFilePath := fmt.Sprintf("%s/%s/toMerge.txt", downloadDir, streamerUsername)
+	outputFileName := fmt.Sprintf("%s/%s/MERGED_%s.mkv", downloadDir, streamerUsername, currentTime.Format(dateTimeFormat))
 	ffmpegMerge(mergeListFilePath, outputFileName)
 	generateThumbnail(outputFileName)
 	err := os.Remove(mergeListFilePath)
@@ -176,15 +178,15 @@ func mergeAndCleanup(streamerUsername string, currentTime time.Time) {
 		fmt.Printf("[ERROR] unable to delete ffmpeg merge list (%s): %s\n", streamerUsername, err)
 		return
 	}
-	deleteFiles, err := os.ReadDir("./downloads/" + streamerUsername)
+	deleteFiles, err := os.ReadDir(fmt.Sprintf("%s/%s", downloadDir, streamerUsername))
 	if err != nil {
 		fmt.Printf("[ERROR] unable to read streamer directory (%s): %s\n", streamerUsername, err)
 		return
 	}
 	for _, deleteFile := range deleteFiles {
-		if !deleteFile.IsDir() && strings.Contains(deleteFile.Name(), "compressed") && fileIsOldEnough(fmt.Sprintf("./downloads/%s/%s", streamerUsername, deleteFile.Name()), currentTime) {
+		if !deleteFile.IsDir() && strings.Contains(deleteFile.Name(), "compressed") && fileIsOldEnough(fmt.Sprintf("%s/%s/%s", downloadDir, streamerUsername, deleteFile.Name()), currentTime) {
 			fmt.Printf("[Monitor] deleting video file: %s\n", deleteFile.Name())
-			err = os.Remove(fmt.Sprintf("./downloads/%s/%s", streamerUsername, deleteFile.Name()))
+			err = os.Remove(fmt.Sprintf("%s/%s/%s", downloadDir, streamerUsername, deleteFile.Name()))
 			if err != nil {
 				fmt.Printf("[ERROR] unable to delete video file (%s): %s\n", streamerUsername, err)
 				return
@@ -233,11 +235,11 @@ func handleRecording(username string) {
 						}
 					}
 					currentTime := time.Now().UTC().Format(dateTimeFormat)
-					err = os.MkdirAll("./downloads/"+username, os.ModePerm)
+					err = os.MkdirAll(fmt.Sprintf("%s/%s", downloadDir, username), os.ModePerm)
 					if err != nil {
 						fmt.Printf("[ERROR] unable to create directory (%s): %s\n", username, err)
 					}
-					streamVideoFile(stream_url, fmt.Sprintf("./downloads/%s/%s_%s.mkv", username, username, currentTime))
+					streamVideoFile(stream_url, fmt.Sprintf("%s/%s/%s_%s.mkv", downloadDir, username, username, currentTime))
 					go handleCompression(username, currentTime)
 				} else {
 					for i := 0; i < len(streamers.Streamers); i++ {
@@ -262,8 +264,8 @@ func handleRecording(username string) {
 }
 
 func handleCompression(username string, UTCtime string) {
-	compressVideoFile(fmt.Sprintf("./downloads/%s/%s_%s.mkv", username, username, UTCtime), fmt.Sprintf("./downloads/%s/%s_compressed_%s.mkv", username, username, UTCtime))
-	err := os.Remove(fmt.Sprintf("./downloads/%s/%s_%s.mkv", username, username, UTCtime))
+	compressVideoFile(fmt.Sprintf("%s/%s/%s_%s.mkv", downloadDir, username, username, UTCtime), fmt.Sprintf("%s/%s/%s_compressed_%s.mkv", downloadDir, username, username, UTCtime))
+	err := os.Remove(fmt.Sprintf("%s/%s/%s_%s.mkv", downloadDir, username, username, UTCtime))
 	if err != nil {
 		fmt.Printf("[ERROR] unable to delete video after compression: %s\n", err)
 	}

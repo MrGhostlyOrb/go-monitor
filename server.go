@@ -14,7 +14,7 @@ func handleHttpRequests() {
 
 	http.HandleFunc("/delete-merged", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("[MONITOR] starting delete...")
-		files, err := os.ReadDir("./downloads")
+		files, err := os.ReadDir(downloadDir)
 		if err != nil {
 			fmt.Printf("[ERROR] unable to read download dir: %s\n", err)
 			return
@@ -23,16 +23,16 @@ func handleHttpRequests() {
 		for _, file := range files {
 			if file.IsDir() {
 				streamerUsername := file.Name()
-				streamerFiles, err := os.ReadDir("./downloads/" + file.Name())
+				streamerFiles, err := os.ReadDir(fmt.Sprintf("%s/%s", downloadDir, file.Name()))
 				if err != nil {
 					fmt.Printf("[ERROR] unable to read streamer dir (%s): %s\n", streamerUsername, err)
 					return
 				}
 
 				for _, videoFile := range streamerFiles {
-					fileInfo, _ := os.Stat(fmt.Sprintf("./downloads/%s/%s", streamerUsername, videoFile.Name()))
+					fileInfo, _ := os.Stat(fmt.Sprintf("%s/%s/%s", downloadDir, streamerUsername, videoFile.Name()))
 					if !videoFile.IsDir() && strings.Contains(videoFile.Name(), "MERGED") || (!videoFile.IsDir() && !strings.Contains(videoFile.Name(), "MERGED") && !strings.Contains(videoFile.Name(), "compressed") && time.Since(fileInfo.ModTime()) > 24*time.Hour) {
-						err := os.Remove(fmt.Sprintf("./downloads/%s/%s", streamerUsername, videoFile.Name()))
+						err := os.Remove(fmt.Sprintf("%s/%s/%s", downloadDir, streamerUsername, videoFile.Name()))
 						if err != nil {
 							fmt.Printf("[ERROR] unable to remove merged streamer video file (%s): %s\n", streamerUsername, err)
 							return
@@ -40,13 +40,13 @@ func handleHttpRequests() {
 						fmt.Printf("[MONITOR] deleted merged streamer video file (%s): %s\n", streamerUsername, videoFile.Name())
 					}
 				}
-				streamerFiles, err = os.ReadDir("./downloads/" + file.Name())
+				streamerFiles, err = os.ReadDir(fmt.Sprintf("%s/%s", downloadDir, file.Name()))
 				if err != nil {
 					fmt.Printf("[ERROR] unable to read streamer dir (%s): %s\n", streamerUsername, err)
 					return
 				}
 				if len(streamerFiles) == 0 {
-					err = os.Remove("./downloads/" + file.Name())
+					err = os.Remove(fmt.Sprintf("%s/%s", downloadDir, file.Name()))
 					if err != nil {
 						fmt.Printf("[ERROR] unable to remove streamer directory (%s): %s\n", streamerUsername, err)
 						return

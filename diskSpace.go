@@ -11,13 +11,7 @@ import (
 func hasAvaliableDiskSpace() bool {
 	var stat unix.Statfs_t
 
-	wd, err := os.Getwd()
-	if err != nil {
-		fmt.Println("[ERROR] unable to get working dir...")
-		return false
-	}
-
-	err = unix.Statfs(wd, &stat)
+	err := unix.Statfs(downloadDir, &stat)
 	if err != nil {
 		fmt.Println("[ERROR] unable to stat directory...")
 		return false
